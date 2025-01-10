@@ -6,6 +6,7 @@
     <!-- Firebase SDK 추가 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -39,6 +40,7 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             background-color: #f8f8f8;
+            flex-wrap: wrap;
         }
         .room-container {
             width: 250px;
@@ -89,9 +91,18 @@
         }
         .contract-period-view {
             text-align: center;
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 10px;
+            font-size: 14px;
+            color: #333;
+            margin-top: 15px;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        .contract-period-view div {
+            margin: 8px 0;
+            font-weight: 500;
         }
         .date-group {
             display: flex;
@@ -133,8 +144,22 @@
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 20px;
             width: 100%;
+            max-width: 300px;
+        }
+        .view-toggle {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .view-toggle button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -151,6 +176,7 @@
         <h1>공릉동 네모하우스 호실 현황</h1>
         <div class="contact-info">연락처: 010-9870-6347</div>
     </div>
+    
     <div class="building"></div>
 
     <div class="view-toggle">
@@ -171,7 +197,9 @@
         };
 
         // Firebase 초기화
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const database = firebase.database();
 
         const ADMIN_PASSWORD = '2485';
@@ -270,7 +298,17 @@
                 buildingDiv.innerHTML += floorHTML;
             });
 
-            // Firebase에서 실시간으로 데이터 가져오기
+            // 관리자 모드일 때만 저장 버튼 추가
+            if (isAdminMode) {
+                const saveButton = document.createElement('div');
+                saveButton.style.textAlign = 'center';
+                saveButton.innerHTML = `
+                    <button class="save-button" onclick="saveAllRoomData()">모든 데이터 저장</button>
+                `;
+                buildingDiv.appendChild(saveButton);
+            }
+
+            // Firebase 데이터 동기화
             floors.forEach(floor => {
                 floor.rooms.forEach(roomNumber => {
                     database.ref(`rooms/${roomNumber}`).on('value', (snapshot) => {
@@ -321,13 +359,11 @@
                         tenantPhone: tenantPhone
                     };
 
-                    // Firebase에 데이터 저장
                     database.ref(`rooms/${roomNumber}`).set(roomData);
                 });
             });
 
             alert('모든 데이터가 저장되었습니다.');
-            renderBuilding();
         }
 
         function setupRoomEvents() {
@@ -347,23 +383,4 @@
                         this.className = `room ${nextStatus}`;
                         this.querySelector('.status-text').textContent = statusTexts[nextStatus];
                     });
-
-                    // 관리자 모드일 때만 하단 저장 버튼 추가
-                    const saveAllButton = document.createElement('div');
-                    saveAllButton.innerHTML = `
-                        <div style="text-align: center; margin-top: 20px;">
-                            <button class="save-button" onclick="saveAllRoomData()">모든 데이터 저장</button>
-                        </div>
-                    `;
-                    document.querySelector('.building').appendChild(saveAllButton);
                 } else {
-                    newRoom.style.cursor = 'not-allowed';
-                }
-            });
-        }
-
-        // 초기 렌더링
-        renderBuilding();
-    </script>
-</body>
-</html>
