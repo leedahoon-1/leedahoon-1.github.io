@@ -298,37 +298,49 @@
             setupRoomEvents();
         }
 
-        function saveAllRoomData() {
-            floors.forEach(floor => {
-                floor.rooms.forEach(roomNumber => {
-                    const container = document.querySelector(`.room-container[data-room="${roomNumber}"]`);
-                    const startYear = container.querySelector('.start-year').value || '미입력';
-                    const startMonth = container.querySelector('.start-month').value || '';
-                    const startDay = container.querySelector('.start-day').value || '';
-                    const endYear = container.querySelector('.end-year').value || '미입력';
-                    const endMonth = container.querySelector('.end-month').value || '';
-                    const endDay = container.querySelector('.end-day').value || '';
-                    const tenantPhone = container.querySelector('.tenant-phone-input').value || '미입력';
-                    const currentStatus = container.querySelector('.room').dataset.status;
-                    
-                    const startDate = startYear !== '미입력' ? `${startYear}년 ${startMonth}월 ${startDay}일` : '미입력';
-                    const endDate = endYear !== '미입력' ? `${endYear}년 ${endMonth}월 ${endDay}일` : '미입력';
+function saveAllRoomData() {
+    try {
+        floors.forEach(floor => {
+            floor.rooms.forEach(roomNumber => {
+                const container = document.querySelector(`.room-container[data-room="${roomNumber}"]`);
+                
+                // 데이터 유효성 검사
+                const startYear = container.querySelector('.start-year').value;
+                const endYear = container.querySelector('.end-year').value;
+                const tenantPhone = container.querySelector('.tenant-phone-input').value;
 
-                    const roomData = {
-                        status: currentStatus,
-                        startDate: startDate,
-                        endDate: endDate,
-                        tenantPhone: tenantPhone
-                    };
+                if (!startYear || !endYear || !tenantPhone) {
+                    alert('모든 필드를 입력해주세요.');
+                    return;
+                }
 
-                    // Firebase에 데이터 저장
-                    database.ref(`rooms/${roomNumber}`).set(roomData);
-                });
+                const roomData = {
+                    status: container.querySelector('.room').dataset.status,
+                    startDate: `${startYear}년 ${container.querySelector('.start-month').value}월 ${container.querySelector('.start-day').value}일`,
+                    endDate: `${endYear}년 ${container.querySelector('.end-month').value}월 ${container.querySelector('.end-day').value}일`,
+                    tenantPhone: tenantPhone
+                };
+
+                // Firebase에 데이터 저장 및 오류 처리
+                database.ref(`rooms/${roomNumber}`).set(roomData)
+                    .then(() => {
+                        console.log(`Room ${roomNumber} data saved successfully`);
+                    })
+                    .catch((error) => {
+                        console.error(`Error saving room ${roomNumber} data:`, error);
+                        alert('데이터 저장 중 오류가 발생했습니다.');
+                    });
             });
+        });
 
-            alert('모든 데이터가 저장되었습니다.');
-            renderBuilding();
-        }
+        alert('모든 데이터가 성공적으로 저장되었습니다.');
+        renderBuilding();
+    } catch (error) {
+        console.error('Unexpected error in saveAllRoomData:', error);
+        alert('예기치 않은 오류가 발생했습니다.');
+    }
+}
+
 
         function setupRoomEvents() {
             const rooms = document.querySelectorAll('.room');
