@@ -99,22 +99,84 @@
             color: #666;
             margin-bottom: 2px;
         }
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .view-toggle {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .view-toggle button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+    <div id="login-overlay" class="login-overlay" style="display:none;">
+        <div class="login-container">
+            <h2>관리자 로그인</h2>
+            <input type="password" id="password-input" maxlength="4" placeholder="4자리 비밀번호">
+            <button onclick="checkPassword()">입력</button>
+        </div>
+    </div>
+
+    <div class="view-toggle">
+        <button onclick="switchToReadOnly()">읽기 전용 보기</button>
+        <button onclick="switchToAdminView()">관리자 보기</button>
+    </div>
+
     <div class="header">
         <h1>공릉동 네모하우스 호실 현황</h1>
         <div class="contact-info">연락처: 010-9870-6347</div>
     </div>
-    <div class="building">
-        <!-- 층별 템플릿 생성을 위한 JavaScript -->
-    </div>
+    <div class="building"></div>
 
     <script>
-        const currentYear = new Date().getFullYear();
-        const yearRange = Array.from({length: 10}, (_, i) => currentYear + i);
-        const months = Array.from({length: 12}, (_, i) => i + 1);
-        const days = Array.from({length: 31}, (_, i) => i + 1);
+        const ADMIN_PASSWORD = '2485';
+        const loginOverlay = document.getElementById('login-overlay');
+        const passwordInput = document.getElementById('password-input');
+        let isAdminMode = false;
+
+        function checkPassword() {
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                loginOverlay.style.display = 'none';
+                isAdminMode = true;
+                setupRoomEvents();
+            } else {
+                alert('비밀번호가 틀렸습니다.');
+                passwordInput.value = '';
+            }
+        }
+
+        function switchToReadOnly() {
+            isAdminMode = false;
+            setupRoomEvents();
+        }
+
+        function switchToAdminView() {
+            loginOverlay.style.display = 'flex';
+        }
 
         const statusStates = ['vacant', 'occupied', 'expiring'];
         const statusTexts = {
@@ -131,79 +193,103 @@
         ];
 
         function createDateSelectors(prefix) {
+            const currentYear = new Date().getFullYear();
+            const yearRange = Array.from({length: 10}, (_, i) => currentYear + i);
+            const months = Array.from({length: 12}, (_, i) => i + 1);
+            const days = Array.from({length: 31}, (_, i) => i + 1);
+
             return `
                 <div class="date-group">
-                    <select class="${prefix}-year">
+                    <select class="${prefix}-year" ${isAdminMode ? '' : 'disabled'}>
                         <option value="">년</option>
                         ${yearRange.map(year => `<option value="${year}">${year}</option>`).join('')}
                     </select>
-                    <select class="${prefix}-month">
+                    <select class="${prefix}-month" ${isAdminMode ? '' : 'disabled'}>
                         <option value="">월</option>
                         ${months.map(month => `<option value="${month}">${month}</option>`).join('')}
                     </select>
-                    <select class="${prefix}-day">
+                    <select class="${prefix}-day" ${isAdminMode ? '' : 'disabled'}>
                         <option value="">일</option>
                         ${days.map(day => `<option value="${day}">${day}</option>`).join('')}
                     </select>
                 </div>`;
         }
 
-        const buildingDiv = document.querySelector('.building');
-        floors.forEach(floor => {
-            const floorHTML = `
-                <div class="floor" data-floor="${floor.name}">
-                    ${floor.rooms.map(roomNumber => `
-                        <div class="room-container">
-                            <div class="room vacant" data-room="${roomNumber}" data-status="vacant">
-                                <div class="room-header">${roomNumber}호</div>
-                                <div class="status-text">공실</div>
+        function renderBuilding() {
+            const buildingDiv = document.querySelector('.building');
+            buildingDiv.innerHTML = ''; // Clear previous content
+            
+            floors.forEach(floor => {
+                const floorHTML = `
+                    <div class="floor" data-floor="${floor.name}">
+                        ${floor.rooms.map(roomNumber => `
+                            <div class="room-container">
+                                <div class="room vacant" data-room="${roomNumber}" data-status="vacant">
+                                    <div class="room-header">${roomNumber}호</div>
+                                    <div class="status-text">공실</div>
+                                </div>
+                                ${isAdminMode ? `
+                                <div class="contract-period">
+                                    <label>계약시작일</label>
+                                    ${createDateSelectors('start')}
+                                    <label>계약종료일</label>
+                                    ${createDateSelectors('end')}
+                                </div>` : ''}
                             </div>
-                            <div class="contract-period">
-                                <label>계약시작일</label>
-                                ${createDateSelectors('start')}
-                                <label>계약종료일</label>
-                                ${createDateSelectors('end')}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            buildingDiv.innerHTML += floorHTML;
-        });
-
-        // 호실 클릭 이벤트
-        document.querySelectorAll('.room').forEach(room => {
-            room.addEventListener('click', function(e) {
-                const currentStatus = this.dataset.status;
-                const currentIndex = statusStates.indexOf(currentStatus);
-                const nextIndex = (currentIndex + 1) % statusStates.length;
-                const nextStatus = statusStates[nextIndex];
-                
-                // 상태 및 클래스 변경
-                this.dataset.status = nextStatus;
-                this.className = `room ${nextStatus}`;
-                this.querySelector('.status-text').textContent = statusTexts[nextStatus];
-                
-                // 정보 표시
-                const container = this.closest('.room-container');
-                const startYear = container.querySelector('.start-year').value || '미입력';
-                const startMonth = container.querySelector('.start-month').value || '';
-                const startDay = container.querySelector('.start-day').value || '';
-                const endYear = container.querySelector('.end-year').value || '미입력';
-                const endMonth = container.querySelector('.end-month').value || '';
-                const endDay = container.querySelector('.end-day').value || '';
-                
-                const startDate = startYear !== '미입력' ? `${startYear}년 ${startMonth}월 ${startDay}일` : '미입력';
-                const endDate = endYear !== '미입력' ? `${endYear}년 ${endMonth}월 ${endDay}일` : '미입력';
-
-                alert(
-                    `호실: ${this.dataset.room}\n` +
-                    `상태: ${statusTexts[nextStatus]}\n` +
-                    `계약시작일: ${startDate}\n` +
-                    `계약종료일: ${endDate}`
-                );
+                        `).join('')}
+                    </div>
+                `;
+                buildingDiv.innerHTML += floorHTML;
             });
-        });
+
+            setupRoomEvents();
+        }
+
+        function setupRoomEvents() {
+            const rooms = document.querySelectorAll('.room');
+            rooms.forEach(room => {
+                // Remove previous event listeners
+                const newRoom = room.cloneNode(true);
+                room.parentNode.replaceChild(newRoom, room);
+
+                if (isAdminMode) {
+                    newRoom.addEventListener('click', function(e) {
+                        const currentStatus = this.dataset.status;
+                        const currentIndex = statusStates.indexOf(currentStatus);
+                        const nextIndex = (currentIndex + 1) % statusStates.length;
+                        const nextStatus = statusStates[nextIndex];
+                        
+                        this.dataset.status = nextStatus;
+                        this.className = `room ${nextStatus}`;
+                        this.querySelector('.status-text').textContent = statusTexts[nextStatus];
+                        
+                        const container = this.closest('.room-container');
+                        const startYear = container.querySelector('.start-year').value || '미입력';
+                        const startMonth = container.querySelector('.start-month').value || '';
+                        const startDay = container.querySelector('.start-day').value || '';
+                        const endYear = container.querySelector('.end-year').value || '미입력';
+                        const endMonth = container.querySelector('.end-month').value || '';
+                        const endDay = container.querySelector('.end-day').value || '';
+                        
+                        const startDate = startYear !== '미입력' ? `${startYear}년 ${startMonth}월 ${startDay}일` : '미입력';
+                        const endDate = endYear !== '미입력' ? `${endYear}년 ${endMonth}월 ${endDay}일` : '미입력';
+
+                        alert(
+                            `호실: ${this.dataset.room}\n` +
+                            `상태: ${statusTexts[nextStatus]}\n` +
+                            `계약시작일: ${startDate}\n` +
+                            `계약종료일: ${endDate}`
+                        );
+                    });
+                } else {
+                    newRoom.style.cursor = 'not-allowed';
+                    newRoom.removeEventListener('click', () => {});
+                }
+            });
+        }
+
+        // Initial render
+        renderBuilding();
     </script>
 </body>
 </html>
