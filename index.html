@@ -89,18 +89,9 @@
         }
         .contract-period-view {
             text-align: center;
-            font-size: 14px;
-            color: #333;
-            margin-top: 15px;
-            line-height: 1.6;
-            background-color: #f9f9f9;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #e0e0e0;
-        }
-        .contract-period-view div {
-            margin: 8px 0;
-            font-weight: 500;
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 10px;
         }
         .date-group {
             display: flex;
@@ -116,16 +107,6 @@
             font-size: 0.9em;
             color: #666;
             margin-bottom: 2px;
-        }
-        .save-button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
         }
         .login-overlay {
             position: fixed;
@@ -145,10 +126,19 @@
             border-radius: 10px;
             text-align: center;
         }
+        .save-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <!-- 기존 코드와 동일 -->
     <div id="login-overlay" class="login-overlay" style="display:none;">
         <div class="login-container">
             <h2>관리자 로그인</h2>
@@ -169,7 +159,7 @@
     </div>
 
     <script>
-        // Firebase 설정 (보안을 위해 실제 프로젝트에서는 환경변수로 관리)
+        // Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyD_xxxxxxxxxxxxxxxxxxxxxxxx",
             authDomain: "nemohhouse.firebaseapp.com",
@@ -203,7 +193,6 @@
             { name: '지하1층', rooms: ['B01', 'B02', 'B03', 'B04'] }
         ];
 
-        // 기존 함수들 그대로 유지
         function checkPassword() {
             if (passwordInput.value === ADMIN_PASSWORD) {
                 loginOverlay.style.display = 'none';
@@ -374,3 +363,7 @@
         }
 
         // 초기 렌더링
+        renderBuilding();
+    </script>
+</body>
+</html>
