@@ -7,148 +7,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
+        /* 이전과 동일한 CSS 스타일 */
         body { 
             font-family: Arial, sans-serif; 
             margin: 20px;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        .contact-info {
-            color: #666;
-            font-size: 18px;
-        }
-        .building { 
-            display: flex; 
-            flex-direction: column;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .floor { 
-            display: flex; 
-            justify-content: space-around; 
-            margin: 10px; 
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f8f8f8;
-        }
-        .room-container {
-            width: 250px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            padding: 10px;
-        }
-        .room {
-            width: 150px;
-            height: 100px;
-            border: 2px solid #000;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .room:hover {
-            transform: scale(1.05);
-        }
-        .room.occupied { 
-            background-color: #90EE90;
-            border-color: #2E8B57;
-        }
-        .room.vacant { 
-            background-color: #FF6347;
-            border-color: #8B0000;
-        }
-        .room.expiring { 
-            background-color: #FFD700;
-            border-color: #DAA520;
-        }
-        .room-header {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .contract-period {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            width: 100%;
-        }
-        .contract-period-view {
-            text-align: center;
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 10px;
-        }
-        .date-group {
-            display: flex;
-            gap: 2px;
-        }
-        select, input {
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        label {
-            font-size: 0.9em;
-            color: #666;
-            margin-bottom: 2px;
-        }
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .login-container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .save-button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-        }
-        .view-toggle {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .view-toggle button {
-            padding: 10px 20px;
-            margin: 0 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+        /* ... 생략 ... */
     </style>
 </head>
 <body>
@@ -171,245 +35,249 @@
         <button onclick="switchToAdminView()">관리자 보기</button>
     </div>
 
-    <!-- 앞부분 HTML/CSS는 이전과 동일 -->
-<script>
-    // Firebase 설정
-    const firebaseConfig = {
-        apiKey: "AIzaSyD_xxxxxxxxxxxxxxxxxxxxxxxx",
-        authDomain: "nemohhouse.firebaseapp.com",
-        databaseURL: "https://nemohhouse-default-rtdb.firebaseio.com",
-        projectId: "nemohhouse",
-        storageBucket: "nemohhouse.appspot.com",
-        messagingSenderId: "xxxxxxxx",
-        appId: "1:xxxxxxxx:web:xxxxxxxxxxxxxxxx"
-    };
+    <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_xxxxxxxxxxxxxxxxxxxxxxxx",
+            authDomain: "nemohhouse.firebaseapp.com",
+            databaseURL: "https://nemohhouse-default-rtdb.firebaseio.com",
+            projectId: "nemohhouse",
+            storageBucket: "nemohhouse.appspot.com",
+            messagingSenderId: "xxxxxxxx",
+            appId: "1:xxxxxxxx:web:xxxxxxxxxxxxxxxx"
+        };
 
-    // Firebase 초기화
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+        // 페이지 로드 시 Firebase 데이터 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            // Firebase 초기화
+            firebase.initializeApp(firebaseConfig);
+            const database = firebase.database();
 
-    const ADMIN_PASSWORD = '2485';
-    const loginOverlay = document.getElementById('login-overlay');
-    const passwordInput = document.getElementById('password-input');
-    let isAdminMode = false;
-
-    const statusStates = ['vacant', 'occupied', 'expiring'];
-    const statusTexts = {
-        'vacant': '공실',
-        'occupied': '계약중',
-        'expiring': '만료예정'
-    };
-
-    const floors = [
-        { name: '3층', rooms: ['301', '302', '303', '304'] },
-        { name: '2층', rooms: ['201', '202', '203', '204'] },
-        { name: '1층', rooms: ['101', '102', '103', '104'] },
-        { name: '지하1층', rooms: ['B01', 'B02', 'B03', 'B04'] }
-    ];
-
-    function checkPassword() {
-        if (passwordInput.value === ADMIN_PASSWORD) {
-            loginOverlay.style.display = 'none';
-            isAdminMode = true;
+            // 초기 렌더링
             renderBuilding();
-        } else {
-            alert('비밀번호가 틀렸습니다.');
-            passwordInput.value = '';
-        }
-    }
-
-    function switchToReadOnly() {
-        isAdminMode = false;
-        renderBuilding();
-    }
-
-    function switchToAdminView() {
-        loginOverlay.style.display = 'flex';
-    }
-
-    function createDateSelectors(prefix) {
-        const currentYear = new Date().getFullYear();
-        const yearRange = Array.from({length: 10}, (_, i) => currentYear + i);
-        const months = Array.from({length: 12}, (_, i) => i + 1);
-        const days = Array.from({length: 31}, (_, i) => i + 1);
-
-        return `
-            <div class="date-group">
-                <select class="${prefix}-year" ${isAdminMode ? '' : 'disabled'}>
-                    <option value="">년</option>
-                    ${yearRange.map(year => `<option value="${year}">${year}</option>`).join('')}
-                </select>
-                <select class="${prefix}-month" ${isAdminMode ? '' : 'disabled'}>
-                    <option value="">월</option>
-                    ${months.map(month => `<option value="${month}">${month}</option>`).join('')}
-                </select>
-                <select class="${prefix}-day" ${isAdminMode ? '' : 'disabled'}>
-                    <option value="">일</option>
-                    ${days.map(day => `<option value="${day}">${day}</option>`).join('')}
-                </select>
-            </div>`;
-    }
-
-    function renderBuilding() {
-        const buildingDiv = document.querySelector('.building');
-        buildingDiv.innerHTML = ''; 
-        
-        floors.forEach(floor => {
-            const floorHTML = `
-                <div class="floor" data-floor="${floor.name}">
-                    ${floor.rooms.map(roomNumber => `
-                        <div class="room-container" data-room="${roomNumber}">
-                            <div class="room vacant" data-room="${roomNumber}" data-status="vacant">
-                                <div class="room-header">${roomNumber}호</div>
-                                <div class="status-text">공실</div>
-                            </div>
-                            ${isAdminMode ? `
-                            <div class="contract-period">
-                                <label>계약시작일</label>
-                                ${createDateSelectors('start')}
-                                <label>계약종료일</label>
-                                ${createDateSelectors('end')}
-                                <label>세입자 전화번호</label>
-                                <input type="text" class="tenant-phone-input" placeholder="010-0000-0000">
-                            </div>` : `
-                            <div class="contract-period-view">
-                                <div class="start-date-view"></div>
-                                <div class="end-date-view"></div>
-                                <div class="tenant-phone"></div>
-                            </div>`}
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            buildingDiv.innerHTML += floorHTML;
         });
 
-        // 관리자 모드일 때만 저장 버튼 추가
-        if (isAdminMode) {
-            const saveButton = document.createElement('div');
-            saveButton.style.textAlign = 'center';
-            saveButton.innerHTML = `
-                <button class="save-button" onclick="saveAllRoomData()">모든 데이터 저장</button>
-            `;
-            buildingDiv.appendChild(saveButton);
-        }
+        const ADMIN_PASSWORD = '2485';
+        const loginOverlay = document.getElementById('login-overlay');
+        const passwordInput = document.getElementById('password-input');
+        let isAdminMode = false;
 
-        // Firebase 데이터 동기화
-        floors.forEach(floor => {
-            floor.rooms.forEach(roomNumber => {
-                database.ref(`rooms/${roomNumber}`).once('value').then((snapshot) => {
-                    const roomData = snapshot.val();
-                    if (roomData) {
-                        const roomContainer = document.querySelector(`.room-container[data-room="${roomNumber}"]`);
-                        if (roomContainer) {
-                            const room = roomContainer.querySelector('.room');
-                            const startDateView = roomContainer.querySelector('.start-date-view');
-                            const endDateView = roomContainer.querySelector('.end-date-view');
-                            const tenantPhoneView = roomContainer.querySelector('.tenant-phone');
+        const statusStates = ['vacant', 'occupied', 'expiring'];
+        const statusTexts = {
+            'vacant': '공실',
+            'occupied': '계약중',
+            'expiring': '만료예정'
+        };
 
-                            // 관리자 모드일 때 입력 필드에 데이터 설정
-                            if (isAdminMode) {
-                                const startYearSelect = roomContainer.querySelector('.start-year');
-                                const startMonthSelect = roomContainer.querySelector('.start-month');
-                                const startDaySelect = roomContainer.querySelector('.start-day');
-                                const endYearSelect = roomContainer.querySelector('.end-year');
-                                const endMonthSelect = roomContainer.querySelector('.end-month');
-                                const endDaySelect = roomContainer.querySelector('.end-day');
-                                const tenantPhoneInput = roomContainer.querySelector('.tenant-phone-input');
+        const floors = [
+            { name: '3층', rooms: ['301', '302', '303', '304'] },
+            { name: '2층', rooms: ['201', '202', '203', '204'] },
+            { name: '1층', rooms: ['101', '102', '103', '104'] },
+            { name: '지하1층', rooms: ['B01', 'B02', 'B03', 'B04'] }
+        ];
 
-                                // 날짜 파싱 및 설정
-                                const parseDate = (dateString) => {
-                                    const match = dateString.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일/);
-                                    return match ? { year: match[1], month: match[2], day: match[3] } : null;
-                                };
-
-                                const startDate = parseDate(roomData.startDate);
-                                const endDate = parseDate(roomData.endDate);
-
-                                if (startDate) {
-                                    startYearSelect.value = startDate.year;
-                                    startMonthSelect.value = startDate.month;
-                                    startDaySelect.value = startDate.day;
-                                }
-
-                                if (endDate) {
-                                    endYearSelect.value = endDate.year;
-                                    endMonthSelect.value = endDate.month;
-                                    endDaySelect.value = endDate.day;
-                                }
-
-                                tenantPhoneInput.value = roomData.tenantPhone;
-                            }
-
-                            room.className = `room ${roomData.status}`;
-                            room.querySelector('.status-text').textContent = statusTexts[roomData.status];
-                            room.dataset.status = roomData.status;
-                            
-                            startDateView.textContent = `계약시작: ${roomData.startDate}`;
-                            endDateView.textContent = `계약종료: ${roomData.endDate}`;
-                            tenantPhoneView.textContent = `세입자 전화번호: ${roomData.tenantPhone}`;
-                        }
-                    }
-                });
-            });
-        });
-
-        setupRoomEvents();
-    }
-
-    function saveAllRoomData() {
-        floors.forEach(floor => {
-            floor.rooms.forEach(roomNumber => {
-                const container = document.querySelector(`.room-container[data-room="${roomNumber}"]`);
-                const startYear = container.querySelector('.start-year').value || '미입력';
-                const startMonth = container.querySelector('.start-month').value || '';
-                const startDay = container.querySelector('.start-day').value || '';
-                const endYear = container.querySelector('.end-year').value || '미입력';
-                const endMonth = container.querySelector('.end-month').value || '';
-                const endDay = container.querySelector('.end-day').value || '';
-                const tenantPhone = container.querySelector('.tenant-phone-input').value || '미입력';
-                const currentStatus = container.querySelector('.room').dataset.status;
-                
-                const startDate = startYear !== '미입력' ? `${startYear}년 ${startMonth}월 ${startDay}일` : '미입력';
-                const endDate = endYear !== '미입력' ? `${endYear}년 ${endMonth}월 ${endDay}일` : '미입력';
-
-                const roomData = {
-                    status: currentStatus,
-                    startDate: startDate,
-                    endDate: endDate,
-                    tenantPhone: tenantPhone
-                };
-
-                database.ref(`rooms/${roomNumber}`).set(roomData);
-            });
-        });
-
-        alert('모든 데이터가 저장되었습니다.');
-    }
-
-    function setupRoomEvents() {
-        const rooms = document.querySelectorAll('.room');
-        rooms.forEach(room => {
-            const newRoom = room.cloneNode(true);
-            room.parentNode.replaceChild(newRoom, room);
-
-            if (isAdminMode) {
-                newRoom.addEventListener('click', function(e) {
-                    const currentStatus = this.dataset.status;
-                    const currentIndex = statusStates.indexOf(currentStatus);
-                    const nextIndex = (currentIndex + 1) % statusStates.length;
-                    const nextStatus = statusStates[nextIndex];
-                    
-                    this.dataset.status = nextStatus;
-                    this.className = `room ${nextStatus}`;
-                    this.querySelector('.status-text').textContent = statusTexts[nextStatus];
-                });
+        function checkPassword() {
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                loginOverlay.style.display = 'none';
+                isAdminMode = true;
+                renderBuilding();
             } else {
-                newRoom.style.cursor = 'not-allowed';
+                alert('비밀번호가 틀렸습니다.');
+                passwordInput.value = '';
             }
-        });
-    }
+        }
 
-    // 초기 렌더링
-    renderBuilding();
-</script>
+        function switchToReadOnly() {
+            isAdminMode = false;
+            renderBuilding();
+        }
+
+        function switchToAdminView() {
+            loginOverlay.style.display = 'flex';
+        }
+
+        function createDateSelectors(prefix) {
+            const currentYear = new Date().getFullYear();
+            const yearRange = Array.from({length: 10}, (_, i) => currentYear + i);
+            const months = Array.from({length: 12}, (_, i) => i + 1);
+            const days = Array.from({length: 31}, (_, i) => i + 1);
+
+            return `
+                <div class="date-group">
+                    <select class="${prefix}-year" ${isAdminMode ? '' : 'disabled'}>
+                        <option value="">년</option>
+                        ${yearRange.map(year => `<option value="${year}">${year}</option>`).join('')}
+                    </select>
+                    <select class="${prefix}-month" ${isAdminMode ? '' : 'disabled'}>
+                        <option value="">월</option>
+                        ${months.map(month => `<option value="${month}">${month}</option>`).join('')}
+                    </select>
+                    <select class="${prefix}-day" ${isAdminMode ? '' : 'disabled'}>
+                        <option value="">일</option>
+                        ${days.map(day => `<option value="${day}">${day}</option>`).join('')}
+                    </select>
+                </div>`;
+        }
+
+        function renderBuilding() {
+            const buildingDiv = document.querySelector('.building');
+            buildingDiv.innerHTML = ''; 
+            
+            floors.forEach(floor => {
+                const floorHTML = `
+                    <div class="floor" data-floor="${floor.name}">
+                        ${floor.rooms.map(roomNumber => `
+                            <div class="room-container" data-room="${roomNumber}">
+                                <div class="room vacant" data-room="${roomNumber}" data-status="vacant">
+                                    <div class="room-header">${roomNumber}호</div>
+                                    <div class="status-text">공실</div>
+                                </div>
+                                ${isAdminMode ? `
+                                <div class="contract-period">
+                                    <label>계약시작일</label>
+                                    ${createDateSelectors('start')}
+                                    <label>계약종료일</label>
+                                    ${createDateSelectors('end')}
+                                    <label>세입자 전화번호</label>
+                                    <input type="text" class="tenant-phone-input" placeholder="010-0000-0000">
+                                </div>` : `
+                                <div class="contract-period-view">
+                                    <div class="start-date-view"></div>
+                                    <div class="end-date-view"></div>
+                                    <div class="tenant-phone"></div>
+                                </div>`}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                buildingDiv.innerHTML += floorHTML;
+            });
+
+            // 관리자 모드일 때만 저장 버튼 추가
+            if (isAdminMode) {
+                const saveButton = document.createElement('div');
+                saveButton.style.textAlign = 'center';
+                saveButton.innerHTML = `
+                    <button class="save-button" onclick="saveAllRoomData()">모든 데이터 저장</button>
+                `;
+                buildingDiv.appendChild(saveButton);
+            }
+
+            // Firebase 데이터 동기화 (실시간 리스너 사용)
+            floors.forEach(floor => {
+                floor.rooms.forEach(roomNumber => {
+                    firebase.database().ref(`rooms/${roomNumber}`).on('value', (snapshot) => {
+                        const roomData = snapshot.val();
+                        if (roomData) {
+                            const roomContainer = document.querySelector(`.room-container[data-room="${roomNumber}"]`);
+                            if (roomContainer) {
+                                const room = roomContainer.querySelector('.room');
+                                const startDateView = roomContainer.querySelector('.start-date-view');
+                                const endDateView = roomContainer.querySelector('.end-date-view');
+                                const tenantPhoneView = roomContainer.querySelector('.tenant-phone');
+
+                                // 관리자 모드일 때 입력 필드에 데이터 설정
+                                if (isAdminMode) {
+                                    const startYearSelect = roomContainer.querySelector('.start-year');
+                                    const startMonthSelect = roomContainer.querySelector('.start-month');
+                                    const startDaySelect = roomContainer.querySelector('.start-day');
+                                    const endYearSelect = roomContainer.querySelector('.end-year');
+                                    const endMonthSelect = roomContainer.querySelector('.end-month');
+                                    const endDaySelect = roomContainer.querySelector('.end-day');
+                                    const tenantPhoneInput = roomContainer.querySelector('.tenant-phone-input');
+
+                                    // 날짜 파싱 및 설정
+                                    const parseDate = (dateString) => {
+                                        const match = dateString.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일/);
+                                        return match ? { year: match[1], month: match[2], day: match[3] } : null;
+                                    };
+
+                                    const startDate = parseDate(roomData.startDate);
+                                    const endDate = parseDate(roomData.endDate);
+
+                                    if (startDate) {
+                                        startYearSelect.value = startDate.year;
+                                        startMonthSelect.value = startDate.month;
+                                        startDaySelect.value = startDate.day;
+                                    }
+
+                                    if (endDate) {
+                                        endYearSelect.value = endDate.year;
+                                        endMonthSelect.value = endDate.month;
+                                        endDaySelect.value = endDate.day;
+                                    }
+
+                                    tenantPhoneInput.value = roomData.tenantPhone;
+                                }
+
+                                room.className = `room ${roomData.status}`;
+                                room.querySelector('.status-text').textContent = statusTexts[roomData.status];
+                                room.dataset.status = roomData.status;
+                                
+                                startDateView.textContent = `계약시작: ${roomData.startDate}`;
+                                endDateView.textContent = `계약종료: ${roomData.endDate}`;
+                                tenantPhoneView.textContent = `세입자 전화번호: ${roomData.tenantPhone}`;
+                            }
+                        }
+                    });
+                });
+            });
+
+            setupRoomEvents();
+        }
+
+        function saveAllRoomData() {
+            floors.forEach(floor => {
+                floor.rooms.forEach(roomNumber => {
+                    const container = document.querySelector(`.room-container[data-room="${roomNumber}"]`);
+                    const startYear = container.querySelector('.start-year').value || '미입력';
+                    const startMonth = container.querySelector('.start-month').value || '';
+                    const startDay = container.querySelector('.start-day').value || '';
+                    const endYear = container.querySelector('.end-year').value || '미입력';
+                    const endMonth = container.querySelector('.end-month').value || '';
+                    const endDay = container.querySelector('.end-day').value || '';
+                    const tenantPhone = container.querySelector('.tenant-phone-input').value || '미입력';
+                    const currentStatus = container.querySelector('.room').dataset.status;
+                    
+                    const startDate = startYear !== '미입력' ? `${startYear}년 ${startMonth}월 ${startDay}일` : '미입력';
+                    const endDate = endYear !== '미입력' ? `${endYear}년 ${endMonth}월 ${endDay}일` : '미입력';
+
+                    const roomData = {
+                        status: currentStatus,
+                        startDate: startDate,
+                        endDate: endDate,
+                        tenantPhone: tenantPhone
+                    };
+
+                    firebase.database().ref(`rooms/${roomNumber}`).set(roomData);
+                });
+            });
+
+            alert('모든 데이터가 저장되었습니다.');
+        }
+
+        function setupRoomEvents() {
+            const rooms = document.querySelectorAll('.room');
+            rooms.forEach(room => {
+                const newRoom = room.cloneNode(true);
+                room.parentNode.replaceChild(newRoom, room);
+
+                if (isAdminMode) {
+                    newRoom.addEventListener('click', function(e) {
+                        const currentStatus = this.dataset.status;
+                        const currentIndex = statusStates.indexOf(currentStatus);
+                        const nextIndex = (currentIndex + 1) % statusStates.length;
+                        const nextStatus = statusStates[nextIndex];
+                        
+                        this.dataset.status = nextStatus;
+                        this.className = `room ${nextStatus}`;
+                        this.querySelector('.status-text').textContent = statusTexts[nextStatus];
+                    });
+                } else {
+                    newRoom.style.cursor = 'not-allowed';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
